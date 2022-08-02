@@ -1,15 +1,13 @@
 ﻿using System.Text;
 
 var fileBytes = File.ReadAllBytes(args[0]);
-var builder = new StringBuilder();
+var list = new List<byte>();
 
 for (int i = 0; i < fileBytes.Length; i += 2)
 {
     if ((fileBytes[i] & 0x80) == 0)
     {
-        builder.Append((char)fileBytes[i]);
-        Console.Write((char)fileBytes[i]);
-
+        list.Add(fileBytes[i]);
         i--;
     }
     else
@@ -27,11 +25,13 @@ for (int i = 0; i < fileBytes.Length; i += 2)
 
         if (jongsung > 16) jongsung -= 1;
 
-        var unicode = (short)(chosung * 588 + jungsung * 28 + jongsung + 44032);
-        var bytes = BitConverter.GetBytes(unicode);
-        var str = Encoding.Unicode.GetString(bytes);
-
-        builder.Append(str);
-        Console.Write(str);
+        var unicode = (ushort)(chosung * 588 + jungsung * 28 + jongsung + 44032);
+        list.AddRange(new byte[] {
+            (byte)(0xE0 | (unicode >> 12)),
+            (byte)(0x80 | ((unicode >> 6) & 0x3F)),
+            (byte)(0x80 | (unicode & 0x3F))
+        });
     }
 }
+
+File.WriteAllBytes(args[0] + ".utf8", list.ToArray());
